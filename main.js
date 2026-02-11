@@ -119,9 +119,79 @@ function renderPortfolio() {
 function renderClients() {
   const el = document.getElementById('clientsGrid');
   if (!el) return;
-  el.innerHTML = DataStore.getClients().map(c =>
-    `<div class="cl-card reveal"><span>${c.name}</span></div>`
-  ).join('');
+
+  // Brand styles for SVG text logos
+  const BRANDS = {
+    'NH투자증권':       { color: '#00823F', weight: 800 },
+    'CITI BANK':        { text: 'CITI', color: '#003DA5', weight: 800, size: 18 },
+    '동아일보':         { color: '#C41230', weight: 800 },
+    '하나투어':         { color: '#F37321', weight: 700 },
+    '모두투어':         { color: '#0066B3', weight: 700 },
+    '채널A':            { color: '#E31937', weight: 800 },
+    '국민대학교':       { color: '#8B1A2B', weight: 700 },
+    '동국제강그룹':     { text: '동국제강', color: '#003478', weight: 800 },
+    '한국투자증권':     { color: '#F58220', weight: 700 },
+    'IBK투자증권':      { text: 'IBK', color: '#0072BC', weight: 800, size: 18 },
+    '유안타증권':       { color: '#ED1C24', weight: 700 },
+    '한국무역보험공사': { text: 'K-SURE', color: '#003DA5', weight: 800, size: 16 },
+    'E채널':            { color: '#E31937', weight: 800 },
+    '중부일보':         { color: '#1B4F72', weight: 700 },
+    'Korea Financial Group': { text: 'KFG', color: '#1A5276', weight: 800, size: 18 },
+    'SM면세점':         { text: 'SM', color: '#C70039', weight: 800, size: 18 },
+    'PIVOT group':      { text: 'PIVOT', color: '#2C3E50', weight: 800, size: 16 },
+    '수원시청':         { color: '#1B6B1B', weight: 700 },
+    '안양시청':         { color: '#2E86C1', weight: 700 },
+    '인사혁신처':       { color: '#1A5276', weight: 700 },
+  };
+
+  // Category mapping and ordering
+  const CAT_MAP = {
+    '금융': '금융 · 증권',
+    '대기업': '기업',
+    '기업': '기업',
+    '공공기관': '공공기관 · 교육',
+    '교육': '공공기관 · 교육',
+    '미디어': '미디어',
+    '여행': '여행 · 유통',
+    '유통': '여행 · 유통',
+    '협회': '여행 · 유통'
+  };
+  const CAT_ORDER = ['금융 · 증권', '공공기관 · 교육', '미디어', '기업', '여행 · 유통'];
+
+  // Group clients
+  const groups = {};
+  DataStore.getClients().forEach(c => {
+    const cat = CAT_MAP[c.category] || '기타';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(c);
+  });
+
+  // Build logo card HTML
+  function logoCard(c) {
+    const b = BRANDS[c.name];
+    if (b) {
+      const text = b.text || c.name;
+      const size = b.size || 14;
+      return `<div class="cl-card reveal">
+        <svg viewBox="0 0 ${Math.max(text.length * size * 0.65, 80)} 36" width="${Math.max(text.length * size * 0.65, 80)}" height="36">
+          <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
+            fill="${b.color}" font-family="'Inter','Noto Sans KR',sans-serif"
+            font-size="${size}" font-weight="${b.weight}" letter-spacing="-0.02em">${text}</text>
+        </svg>
+      </div>`;
+    }
+    return `<div class="cl-card reveal"><span class="cl-text">${c.name}</span></div>`;
+  }
+
+  // Render grouped layout
+  el.innerHTML = CAT_ORDER
+    .filter(cat => groups[cat] && groups[cat].length)
+    .map(cat => `
+      <div class="cl-category">
+        <div class="cl-category-label">${cat}</div>
+        <div class="cl-grid">${groups[cat].map(logoCard).join('')}</div>
+      </div>
+    `).join('');
 }
 
 // ---- SCROLL REVEAL ----
