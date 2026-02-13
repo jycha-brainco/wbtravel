@@ -500,6 +500,56 @@
     .nav-link-row .btn-remove:hover { background: #fef2f2; }
     .nav-link-row .btn-remove svg { width: 18px; height: 18px; }
 
+    /* ---- Image Preview ---- */
+    .img-preview {
+      margin-top: 8px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--admin-border);
+      display: inline-block;
+    }
+    .img-preview img {
+      display: block;
+      max-height: 100px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    /* ---- Metric Row ---- */
+    .metric-row {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+    }
+    .metric-row input {
+      padding: 8px 12px; border: 1px solid var(--admin-border); border-radius: 6px;
+      font-size: 0.85rem; font-family: var(--admin-font); background: var(--admin-bg);
+    }
+    .metric-row input:focus {
+      outline: none; border-color: var(--admin-primary); background: #fff;
+    }
+    .metric-row .btn-remove {
+      background: none; border: none; color: var(--admin-danger); cursor: pointer;
+      padding: 4px; border-radius: 4px; flex-shrink: 0;
+    }
+    .metric-row .btn-remove:hover { background: #fef2f2; }
+    .metric-row .btn-remove svg { width: 18px; height: 18px; }
+
+    /* ---- Inline Toggle ---- */
+    .inline-toggle {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    }
+    .inline-toggle label {
+      font-size: 0.82rem; font-weight: 600; color: var(--admin-text-secondary);
+      margin: 0;
+    }
+
+    /* ---- Range Slider ---- */
+    .form-group input[type="range"] {
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+
     /* ---- Pages visibility ---- */
     .page { display: none; }
     .page.active { display: block; }
@@ -734,6 +784,152 @@
 
       <!-- Site Settings Page -->
       <div class="page" id="page-site-settings">
+
+        <!-- Card A: 상단 네비게이션 설정 -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <h2>상단 네비게이션 설정</h2>
+            <button class="btn-admin btn-admin-primary" onclick="saveNavHeaderSettings()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 13l4 4L19 7"/></svg>
+              저장
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>로고 이미지 URL</label>
+              <input type="text" id="setNavLogoUrl" placeholder="/assets/logo.png" />
+              <div id="navLogoPreview" class="img-preview" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-group">
+              <label>로고 Alt 텍스트</label>
+              <input type="text" id="setNavLogoAlt" placeholder="WB TRAVEL" />
+            </div>
+            <div class="form-group">
+              <label>네비 스타일</label>
+              <select id="setNavStyle">
+                <option value="transparent">투명 (히어로 위)</option>
+                <option value="white">화이트 (고정)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card B: 히어로 섹션 설정 -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <h2>히어로 섹션 설정</h2>
+            <button class="btn-admin btn-admin-primary" onclick="saveHeroSettings()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 13l4 4L19 7"/></svg>
+              저장
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>배지 텍스트</label>
+              <input type="text" id="setHeroBadge" placeholder="Since 2003 — Corporate Travel Specialist" />
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="form-group">
+                <label>타이틀 (일반 텍스트)</label>
+                <input type="text" id="setHeroTitle" placeholder="비즈니스 여행의" />
+              </div>
+              <div class="form-group">
+                <label>타이틀 하이라이트 (그라데이션)</label>
+                <input type="text" id="setHeroTitleHighlight" placeholder="새로운 기준" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>설명</label>
+              <textarea id="setHeroDescription" rows="3" placeholder="줄바꿈은 그대로 반영됩니다."></textarea>
+            </div>
+            <div class="form-group">
+              <label>배경 이미지 URL</label>
+              <input type="text" id="setHeroBgImage" placeholder="https://images.unsplash.com/..." />
+              <div id="heroBgPreview" class="img-preview" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-group">
+              <label>배경 불투명도: <strong id="opacityValue">0.15</strong></label>
+              <input type="range" id="setHeroBgOpacity" min="0" max="0.5" step="0.05" value="0.15" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Card C: 버튼 및 지표 설정 -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <h2>버튼 및 지표 설정</h2>
+            <button class="btn-admin btn-admin-primary" onclick="saveHeroSettings()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 13l4 4L19 7"/></svg>
+              저장
+            </button>
+          </div>
+          <div class="card-body">
+            <h3 style="font-size:0.9rem;font-weight:700;margin-bottom:12px;">Primary 버튼</h3>
+            <div class="inline-toggle">
+              <label>표시</label>
+              <label class="toggle">
+                <input type="checkbox" id="setPrimaryBtnShow" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="form-group">
+                <label>버튼 텍스트</label>
+                <input type="text" id="setPrimaryBtnText" placeholder="서비스 알아보기 →" />
+              </div>
+              <div class="form-group">
+                <label>링크 URL</label>
+                <input type="text" id="setPrimaryBtnHref" placeholder="/services.html" />
+              </div>
+            </div>
+
+            <h3 style="font-size:0.9rem;font-weight:700;margin-bottom:12px;margin-top:8px;">Ghost 버튼</h3>
+            <div class="inline-toggle">
+              <label>표시</label>
+              <label class="toggle">
+                <input type="checkbox" id="setGhostBtnShow" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="form-group">
+                <label>버튼 텍스트</label>
+                <input type="text" id="setGhostBtnText" placeholder="상담 문의" />
+              </div>
+              <div class="form-group">
+                <label>링크 URL</label>
+                <input type="text" id="setGhostBtnHref" placeholder="/contact.html" />
+              </div>
+            </div>
+
+            <hr style="border:none;border-top:1px solid var(--admin-border);margin:20px 0;" />
+
+            <h3 style="font-size:0.9rem;font-weight:700;margin-bottom:12px;">지표 (Metrics)</h3>
+            <div class="inline-toggle">
+              <label>지표 표시</label>
+              <label class="toggle">
+                <input type="checkbox" id="setShowMetrics" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div id="metricsEditor"></div>
+            <button class="btn-admin btn-admin-outline" onclick="addMetricRow()" style="margin-top:8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 4v16m8-8H4"/></svg>
+              지표 추가
+            </button>
+
+            <hr style="border:none;border-top:1px solid var(--admin-border);margin:20px 0;" />
+
+            <div class="inline-toggle">
+              <label>스크롤 인디케이터 표시</label>
+              <label class="toggle">
+                <input type="checkbox" id="setShowScrollIndicator" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div class="card" style="margin-bottom:24px;">
           <div class="card-header">
             <h2>푸터 설정</h2>
@@ -1140,6 +1336,7 @@
       document.getElementById('setCompanyIata').value = f.companyIata || 'IATA: 17319223';
       document.getElementById('setCopyright').value = f.copyright || '© 2003-2025 Wellbeing Travel Co., Ltd. All rights reserved.';
       renderNavLinksEditor();
+      loadHeroSettings();
     }
 
     function renderNavLinksEditor() {
@@ -1210,6 +1407,166 @@
       try {
         await saveSiteConfig(siteConfig);
         showToast('푸터 설정이 저장되었습니다.');
+      } catch (err) {
+        showToast('오류: ' + err.message);
+      }
+    }
+
+    // ---- HERO / NAV SETTINGS ----
+    function loadHeroSettings() {
+      const cfg = siteConfig || {};
+
+      // Nav settings
+      const nav = cfg.nav || {};
+      const logoUrlInput = document.getElementById('setNavLogoUrl');
+      logoUrlInput.value = nav.logoUrl || '/assets/logo.png';
+      document.getElementById('setNavLogoAlt').value = nav.logoAlt || 'WB TRAVEL';
+      document.getElementById('setNavStyle').value = nav.style || 'transparent';
+      updateNavLogoPreview();
+      logoUrlInput.addEventListener('input', updateNavLogoPreview);
+
+      // Hero settings
+      const h = cfg.hero || {};
+      document.getElementById('setHeroBadge').value = h.badge !== undefined ? h.badge : 'Since 2003 — Corporate Travel Specialist';
+      document.getElementById('setHeroTitle').value = h.title !== undefined ? h.title : '비즈니스 여행의';
+      document.getElementById('setHeroTitleHighlight').value = h.titleHighlight !== undefined ? h.titleHighlight : '새로운 기준';
+      document.getElementById('setHeroDescription').value = h.description !== undefined ? h.description : '20년간 축적된 전문성으로 기업 출장부터 MICE 행사까지,\n웰빙트래블이 최적의 솔루션을 제공합니다.';
+
+      const bgInput = document.getElementById('setHeroBgImage');
+      bgInput.value = h.backgroundImage || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80';
+      updateHeroBgPreview();
+      bgInput.addEventListener('input', updateHeroBgPreview);
+
+      const opacitySlider = document.getElementById('setHeroBgOpacity');
+      opacitySlider.value = h.backgroundOpacity !== undefined ? h.backgroundOpacity : 0.15;
+      document.getElementById('opacityValue').textContent = opacitySlider.value;
+      opacitySlider.addEventListener('input', function() {
+        document.getElementById('opacityValue').textContent = this.value;
+      });
+
+      // Buttons
+      const pb = h.primaryBtn || { text: '서비스 알아보기 →', href: '/services.html', show: true };
+      document.getElementById('setPrimaryBtnShow').checked = pb.show !== false;
+      document.getElementById('setPrimaryBtnText').value = pb.text || '';
+      document.getElementById('setPrimaryBtnHref').value = pb.href || '';
+
+      const gb = h.ghostBtn || { text: '상담 문의', href: '/contact.html', show: true };
+      document.getElementById('setGhostBtnShow').checked = gb.show !== false;
+      document.getElementById('setGhostBtnText').value = gb.text || '';
+      document.getElementById('setGhostBtnHref').value = gb.href || '';
+
+      // Metrics
+      document.getElementById('setShowMetrics').checked = h.showMetrics !== false;
+      const metrics = h.metrics || [
+        { value: 20, suffix: '년+', label: '업력' },
+        { value: 500, suffix: '+', label: '기업고객' },
+        { value: 11, suffix: '건', label: '주요 포트폴리오' }
+      ];
+      renderMetricsEditor(metrics);
+
+      // Scroll indicator
+      document.getElementById('setShowScrollIndicator').checked = h.showScrollIndicator !== false;
+    }
+
+    function updateNavLogoPreview() {
+      const url = document.getElementById('setNavLogoUrl').value.trim();
+      const preview = document.getElementById('navLogoPreview');
+      if (url) {
+        preview.innerHTML = '<img src="' + url + '" alt="로고 미리보기" onerror="this.parentElement.innerHTML=\'<span style=\\\'padding:8px;font-size:0.8rem;color:var(--admin-text-secondary);\\\'>이미지를 불러올 수 없습니다.</span>\'" />';
+      } else {
+        preview.innerHTML = '';
+      }
+    }
+
+    function updateHeroBgPreview() {
+      const url = document.getElementById('setHeroBgImage').value.trim();
+      const preview = document.getElementById('heroBgPreview');
+      if (url) {
+        preview.innerHTML = '<img src="' + url + '" alt="배경 미리보기" style="max-width:300px;" onerror="this.parentElement.innerHTML=\'<span style=\\\'padding:8px;font-size:0.8rem;color:var(--admin-text-secondary);\\\'>이미지를 불러올 수 없습니다.</span>\'" />';
+      } else {
+        preview.innerHTML = '';
+      }
+    }
+
+    function renderMetricsEditor(metrics) {
+      const el = document.getElementById('metricsEditor');
+      if (!metrics || !metrics.length) { el.innerHTML = ''; return; }
+      el.innerHTML = metrics.map((m, i) => `
+        <div class="metric-row" data-index="${i}">
+          <input type="number" value="${m.value}" placeholder="숫자" style="width:80px;" class="metric-value-input" />
+          <input type="text" value="${m.suffix}" placeholder="접미사" style="width:80px;" class="metric-suffix-input" />
+          <input type="text" value="${m.label}" placeholder="라벨" style="flex:1;" class="metric-label-input" />
+          <button class="btn-remove" onclick="removeMetricRow(${i})" title="삭제">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function getMetricsFromEditor() {
+      const rows = document.querySelectorAll('.metric-row');
+      return Array.from(rows).map(row => ({
+        value: parseInt(row.querySelector('.metric-value-input').value) || 0,
+        suffix: row.querySelector('.metric-suffix-input').value.trim(),
+        label: row.querySelector('.metric-label-input').value.trim()
+      })).filter(m => m.label);
+    }
+
+    function addMetricRow() {
+      const current = getMetricsFromEditor();
+      current.push({ value: 0, suffix: '', label: '' });
+      renderMetricsEditor(current);
+    }
+
+    function removeMetricRow(index) {
+      const current = getMetricsFromEditor();
+      current.splice(index, 1);
+      renderMetricsEditor(current);
+    }
+
+    async function saveNavHeaderSettings() {
+      if (!siteConfig) siteConfig = { hiddenClients: [], header: {}, footer: {} };
+      if (!siteConfig.nav) siteConfig.nav = {};
+      siteConfig.nav.logoUrl = document.getElementById('setNavLogoUrl').value.trim() || '/assets/logo.png';
+      siteConfig.nav.logoAlt = document.getElementById('setNavLogoAlt').value.trim() || 'WB TRAVEL';
+      siteConfig.nav.style = document.getElementById('setNavStyle').value;
+      try {
+        await saveSiteConfig(siteConfig);
+        showToast('네비게이션 설정이 저장되었습니다.');
+      } catch (err) {
+        showToast('오류: ' + err.message);
+      }
+    }
+
+    async function saveHeroSettings() {
+      if (!siteConfig) siteConfig = { hiddenClients: [], header: {}, footer: {} };
+      if (!siteConfig.hero) siteConfig.hero = {};
+
+      siteConfig.hero.badge = document.getElementById('setHeroBadge').value.trim();
+      siteConfig.hero.title = document.getElementById('setHeroTitle').value.trim();
+      siteConfig.hero.titleHighlight = document.getElementById('setHeroTitleHighlight').value.trim();
+      siteConfig.hero.description = document.getElementById('setHeroDescription').value;
+      siteConfig.hero.backgroundImage = document.getElementById('setHeroBgImage').value.trim();
+      siteConfig.hero.backgroundOpacity = parseFloat(document.getElementById('setHeroBgOpacity').value);
+
+      siteConfig.hero.primaryBtn = {
+        text: document.getElementById('setPrimaryBtnText').value.trim(),
+        href: document.getElementById('setPrimaryBtnHref').value.trim(),
+        show: document.getElementById('setPrimaryBtnShow').checked
+      };
+      siteConfig.hero.ghostBtn = {
+        text: document.getElementById('setGhostBtnText').value.trim(),
+        href: document.getElementById('setGhostBtnHref').value.trim(),
+        show: document.getElementById('setGhostBtnShow').checked
+      };
+
+      siteConfig.hero.showMetrics = document.getElementById('setShowMetrics').checked;
+      siteConfig.hero.metrics = getMetricsFromEditor();
+      siteConfig.hero.showScrollIndicator = document.getElementById('setShowScrollIndicator').checked;
+
+      try {
+        await saveSiteConfig(siteConfig);
+        showToast('히어로 설정이 저장되었습니다.');
       } catch (err) {
         showToast('오류: ' + err.message);
       }

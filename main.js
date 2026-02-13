@@ -143,14 +143,68 @@ function insertNav() {
     const activeClass = page === currentPage ? ' class="active"' : '';
     return `<li><a href="${link.href}"${activeClass}>${link.label}</a></li>`;
   }).join('');
+  const nav = (siteConfig && siteConfig.nav) || {};
+  const logoUrl = nav.logoUrl || '/assets/logo.png';
+  const logoAlt = nav.logoAlt || 'WB TRAVEL';
   placeholder.outerHTML = `
   <nav class="nav" id="nav">
     <div class="nav-inner">
-      <a href="/index.html" class="nav-logo"><img src="/assets/logo.png" alt="WB TRAVEL" class="nav-logo-img" /></a>
+      <a href="/index.html" class="nav-logo"><img src="${logoUrl}" alt="${logoAlt}" class="nav-logo-img" /></a>
       <ul class="nav-links" id="navLinks">${linksHtml}</ul>
       <button class="nav-toggle" id="navToggle" aria-label="메뉴"><span></span><span></span><span></span></button>
     </div>
   </nav>`;
+}
+
+function insertHero() {
+  const placeholder = document.getElementById('hero-placeholder');
+  if (!placeholder) return;
+
+  const h = (siteConfig && siteConfig.hero) || {};
+  const badge = h.badge !== undefined ? h.badge : 'Since 2003 — Corporate Travel Specialist';
+  const title = h.title !== undefined ? h.title : '비즈니스 여행의';
+  const titleHighlight = h.titleHighlight !== undefined ? h.titleHighlight : '새로운 기준';
+  const description = h.description !== undefined ? h.description : '20년간 축적된 전문성으로 기업 출장부터 MICE 행사까지,\n웰빙트래블이 최적의 솔루션을 제공합니다.';
+  const backgroundImage = h.backgroundImage || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80';
+  const backgroundOpacity = h.backgroundOpacity !== undefined ? h.backgroundOpacity : 0.15;
+  const primaryBtn = h.primaryBtn || { text: '서비스 알아보기 →', href: '/services.html', show: true };
+  const ghostBtn = h.ghostBtn || { text: '상담 문의', href: '/contact.html', show: true };
+  const showMetrics = h.showMetrics !== undefined ? h.showMetrics : true;
+  const metrics = h.metrics || [
+    { value: 20, suffix: '년+', label: '업력' },
+    { value: 500, suffix: '+', label: '기업고객' },
+    { value: 11, suffix: '건', label: '주요 포트폴리오' }
+  ];
+  const showScrollIndicator = h.showScrollIndicator !== undefined ? h.showScrollIndicator : true;
+
+  const descHtml = description.replace(/\n/g, '<br>');
+
+  const btnsHtml = (primaryBtn.show !== false || ghostBtn.show !== false) ? `
+      <div class="hero-btns fade-up d4">
+        ${primaryBtn.show !== false ? `<a href="${primaryBtn.href}" class="btn btn-primary">${primaryBtn.text}</a>` : ''}
+        ${ghostBtn.show !== false ? `<a href="${ghostBtn.href}" class="btn btn-ghost">${ghostBtn.text}</a>` : ''}
+      </div>` : '';
+
+  const metricsHtml = showMetrics && metrics.length ? `
+      <div class="hero-metrics fade-up d5">
+        ${metrics.map((m, i) => `${i > 0 ? '<div class="metric-sep"></div>' : ''}<div class="metric"><div class="metric-value"><em data-count="${m.value}">0</em><span>${m.suffix}</span></div><div class="metric-label">${m.label}</div></div>`).join('')}
+      </div>` : '';
+
+  const scrollHtml = showScrollIndicator ? '<div class="hero-scroll-indicator"><span>Scroll</span><div class="scroll-bar"></div></div>' : '';
+
+  placeholder.outerHTML = `
+  <section class="hero" id="hero">
+    <div class="hero-bg-image" style="background-image:url('${backgroundImage}');opacity:${backgroundOpacity};"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-badge fade-up d1"><div class="hero-badge-dot"></div>${badge}</div>
+      <h1 class="hero-title fade-up d2">${title}<br><span class="gradient-text">${titleHighlight}</span></h1>
+      <p class="hero-desc fade-up d3">${descHtml}</p>
+      ${btnsHtml}
+      ${metricsHtml}
+    </div>
+    ${scrollHtml}
+  </section>`;
 }
 
 function insertFooter() {
@@ -407,6 +461,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await loadSiteConfig();
     insertNav();
+    insertHero();
     insertFooter();
     initNav();
     initReveal();
