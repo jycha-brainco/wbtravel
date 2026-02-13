@@ -51,21 +51,27 @@ const DataStore = {
   _cache: {},
   async getHistory() {
     if (this._cache.history) return this._cache.history;
-    const data = await sbFetch('history', 'select=*&order=sort_order');
-    this._cache.history = data;
-    return data;
+    try {
+      const data = await sbFetch('history', 'select=*&order=sort_order');
+      if (Array.isArray(data)) { this._cache.history = data; return data; }
+    } catch (e) { console.error('History fetch error:', e); }
+    return [];
   },
   async getPortfolio() {
     if (this._cache.portfolio) return this._cache.portfolio;
-    const data = await sbFetch('portfolio', 'select=*&order=sort_order');
-    this._cache.portfolio = data;
-    return data;
+    try {
+      const data = await sbFetch('portfolio', 'select=*&order=sort_order');
+      if (Array.isArray(data)) { this._cache.portfolio = data; return data; }
+    } catch (e) { console.error('Portfolio fetch error:', e); }
+    return [];
   },
   async getClients() {
     if (this._cache.clients) return this._cache.clients;
-    const data = await sbFetch('clients', 'select=*&order=sort_order');
-    this._cache.clients = data;
-    return data;
+    try {
+      const data = await sbFetch('clients', 'select=*&order=sort_order');
+      if (Array.isArray(data)) { this._cache.clients = data; return data; }
+    } catch (e) { console.error('Clients fetch error:', e); }
+    return [];
   },
   clearCache() { this._cache = {}; }
 };
@@ -163,6 +169,7 @@ const CAT_ORDER = ['금융 · 증권', '공공기관 · 교육', '미디어', '�
 async function renderTimeline() {
   const el = document.getElementById('historyTimeline');
   if (!el) return;
+  el.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>연혁을 불러오는 중...</p></div>';
   const data = await DataStore.getHistory();
   el.innerHTML = data.map(h => `
     <div class="tl-item reveal">
@@ -175,12 +182,17 @@ async function renderTimeline() {
 async function renderPortfolio() {
   const el = document.getElementById('portfolioGrid');
   if (!el) return;
+  el.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>포트폴리오를 불러오는 중...</p></div>';
   const icons = {
     workshop: '<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>',
     golf: '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
     event: '<path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>'
   };
   const data = await DataStore.getPortfolio();
+  if (!data.length) {
+    el.innerHTML = '<p class="empty-state">등록된 포트폴리오가 없습니다.</p>';
+    return;
+  }
   el.innerHTML = data.map(p => {
     const thumbContent = p.image_url
       ? `<img src="${p.image_url}" alt="${p.title}" style="width:100%;height:100%;object-fit:cover;" />`
@@ -207,6 +219,7 @@ async function renderPortfolio() {
 async function renderClients(targetId, filterCategory) {
   const el = document.getElementById(targetId || 'clientsGrid');
   if (!el) return;
+  if (!filterCategory) el.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>고객사를 불러오는 중...</p></div>';
   const clients = await DataStore.getClients();
   const groups = {};
   clients.forEach(c => {
