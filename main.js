@@ -98,7 +98,7 @@ function insertNav() {
   placeholder.outerHTML = `
   <nav class="nav" id="nav">
     <div class="nav-inner">
-      <a href="/index.html" class="nav-logo"><img src="/assets/logo.png" alt="WB TRAVEL" class="nav-logo-img" /></a>
+      <a href="/index.html" class="nav-logo"><span class="logo-wb">WB</span><svg class="logo-plane" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg><span class="logo-right"><span class="logo-travel">TRAVEL</span><span class="logo-sub">WELLBEING TRAVEL</span></span></a>
       <ul class="nav-links" id="navLinks">${linksHtml}</ul>
       <button class="nav-toggle" id="navToggle" aria-label="메뉴"><span></span><span></span><span></span></button>
     </div>
@@ -113,7 +113,7 @@ function insertFooter() {
     <div class="container">
       <div class="footer-inner">
         <div class="footer-brand">
-          <span class="nav-logo"><img src="/assets/logo.png" alt="WB TRAVEL" class="footer-logo-img" /></span>
+          <span class="nav-logo"><span class="logo-wb">WB</span><svg class="logo-plane" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg><span class="logo-right"><span class="logo-travel">TRAVEL</span><span class="logo-sub">WELLBEING TRAVEL</span></span></span>
           <p>(주)웰빙트래블 | 대표 서상호<br>종합여행업 제 2018-000012호 | IATA: 17319223</p>
         </div>
         <div class="footer-links">
