@@ -599,7 +599,7 @@
     </nav>
 
     <div class="sidebar-footer">
-      <a href="./index.html">
+      <a href="/index.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
         IR 사이트 보기
       </a>
@@ -802,7 +802,7 @@
   <div class="toast" id="toast"></div>
 
   <!-- Load shared data layer -->
-  <script src="./main.js"></script>
+  <script src="/main.js"></script>
   <script>
     // ---- Admin State ----
     let currentModal = null;
@@ -1146,12 +1146,12 @@
       const cfg = siteConfig || {};
       const h = cfg.header || {};
       const links = h.navLinks || [
-        { label: '홈', href: './index.html' },
-        { label: '회사개요', href: './about.html' },
-        { label: '서비스', href: './services.html' },
-        { label: '포트폴리오', href: './portfolio.html' },
-        { label: '고객사', href: './clients.html' },
-        { label: '문의', href: './contact.html' }
+        { label: '홈', href: '/index.html' },
+        { label: '회사개요', href: '/about.html' },
+        { label: '서비스', href: '/services.html' },
+        { label: '포트폴리오', href: '/portfolio.html' },
+        { label: '고객사', href: '/clients.html' },
+        { label: '문의', href: '/contact.html' }
       ];
       const el = document.getElementById('navLinksEditor');
       el.innerHTML = links.map((link, i) => `
@@ -1169,7 +1169,7 @@
       if (!siteConfig) siteConfig = { hiddenClients: [], header: {}, footer: {} };
       if (!siteConfig.header) siteConfig.header = {};
       if (!siteConfig.header.navLinks) siteConfig.header.navLinks = [];
-      siteConfig.header.navLinks.push({ label: '새 메뉴', href: './' });
+      siteConfig.header.navLinks.push({ label: '새 메뉴', href: '/' });
       renderNavLinksEditor();
     }
 

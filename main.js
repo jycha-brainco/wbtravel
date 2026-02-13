@@ -126,12 +126,12 @@ function insertNav() {
   if (!placeholder) return;
   const currentPage = getCurrentPage();
   const navLinks = (siteConfig && siteConfig.header && siteConfig.header.navLinks) || [
-    { label: '홈', href: './index.html' },
-    { label: '회사개요', href: './about.html' },
-    { label: '서비스', href: './services.html' },
-    { label: '포트폴리오', href: './portfolio.html' },
-    { label: '고객사', href: './clients.html' },
-    { label: '문의', href: './contact.html' }
+    { label: '홈', href: '/index.html' },
+    { label: '회사개요', href: '/about.html' },
+    { label: '서비스', href: '/services.html' },
+    { label: '포트폴리오', href: '/portfolio.html' },
+    { label: '고객사', href: '/clients.html' },
+    { label: '문의', href: '/contact.html' }
   ];
   const linksHtml = navLinks.map(link => {
     const page = (link.href.match(/(\w+)\.html/) || [])[1] || 'index';
@@ -141,7 +141,7 @@ function insertNav() {
   placeholder.outerHTML = `
   <nav class="nav" id="nav">
     <div class="nav-inner">
-      <a href="./index.html" class="nav-logo"><img src="./assets/logo.png" alt="WB TRAVEL" class="nav-logo-img" /></a>
+      <a href="/index.html" class="nav-logo"><img src="/assets/logo.png" alt="WB TRAVEL" class="nav-logo-img" /></a>
       <ul class="nav-links" id="navLinks">${linksHtml}</ul>
       <button class="nav-toggle" id="navToggle" aria-label="메뉴"><span></span><span></span><span></span></button>
     </div>
@@ -158,12 +158,12 @@ function insertFooter() {
   const companyIata = f.companyIata || 'IATA: 17319223';
   const copyright = f.copyright || '&copy; 2003-2025 Wellbeing Travel Co., Ltd. All rights reserved.';
   const footerLinks = f.links || [
-    { label: '회사개요', href: './about.html' },
-    { label: '서비스', href: './services.html' },
-    { label: '포트폴리오', href: './portfolio.html' },
-    { label: '고객사', href: './clients.html' },
-    { label: '문의', href: './contact.html' },
-    { label: '관리자', href: './admin.html' }
+    { label: '회사개요', href: '/about.html' },
+    { label: '서비스', href: '/services.html' },
+    { label: '포트폴리오', href: '/portfolio.html' },
+    { label: '고객사', href: '/clients.html' },
+    { label: '문의', href: '/contact.html' },
+    { label: '관리자', href: '/admin.html' }
   ];
   const linksHtml = footerLinks.map(l => `<a href="${l.href}">${l.label}</a>`).join('\n          ');
   placeholder.outerHTML = `
@@ -171,7 +171,7 @@ function insertFooter() {
     <div class="container">
       <div class="footer-inner">
         <div class="footer-brand">
-          <span class="nav-logo"><img src="./assets/logo.png" alt="WB TRAVEL" class="footer-logo-img" /></span>
+          <span class="nav-logo"><img src="/assets/logo.png" alt="WB TRAVEL" class="footer-logo-img" /></span>
           <p>${companyName} | ${companyCeo}<br>${companyLicense} | ${companyIata}</p>
         </div>
         <div class="footer-links">
