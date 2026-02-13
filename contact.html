@@ -55,7 +55,112 @@
     </div>
   </section>
 
+  <!-- Inquiry Form -->
+  <section class="section section-white">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-label">Contact Us</p>
+        <h2 class="section-title">문의하기</h2>
+        <p class="section-desc">아래 양식을 작성해 주시면 빠르게 답변 드리겠습니다.</p>
+      </div>
+
+      <div class="contact-form reveal" id="inquiryForm">
+        <div class="contact-form-grid">
+          <div class="form-group">
+            <label>이름 <span class="required">*</span></label>
+            <input type="text" id="inqName" placeholder="홍길동" required />
+          </div>
+          <div class="form-group">
+            <label>이메일 <span class="required">*</span></label>
+            <input type="email" id="inqEmail" placeholder="email@example.com" required />
+          </div>
+          <div class="form-group">
+            <label>전화번호</label>
+            <input type="tel" id="inqPhone" placeholder="010-0000-0000" />
+          </div>
+          <div class="form-group">
+            <label>회사명</label>
+            <input type="text" id="inqCompany" placeholder="회사명" />
+          </div>
+        </div>
+        <div class="form-group-full">
+          <div class="form-group">
+            <label>문의유형</label>
+            <select id="inqType">
+              <option value="기업출장">기업출장</option>
+              <option value="MICE·인센티브">MICE·인센티브</option>
+              <option value="해외여행">해외여행</option>
+              <option value="기타" selected>기타</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group-full">
+          <div class="form-group">
+            <label>문의내용 <span class="required">*</span></label>
+            <textarea id="inqMessage" placeholder="문의하실 내용을 자유롭게 작성해 주세요." required></textarea>
+          </div>
+        </div>
+        <div class="privacy-check">
+          <input type="checkbox" id="inqPrivacy" />
+          <div class="privacy-check-text">
+            <strong>[개인정보 수집·이용 동의]</strong><br />
+            수집 항목: 이름, 이메일, 전화번호, 회사명<br />
+            수집 목적: 문의 접수 및 답변<br />
+            보유 기간: 문의 처리 완료 후 1년<br />
+            동의를 거부할 수 있으며, 거부 시 문의 접수가 제한됩니다.
+          </div>
+        </div>
+        <button class="btn-submit" id="btnSubmitInquiry" onclick="submitInquiry()">문의 보내기</button>
+      </div>
+
+      <div class="contact-form form-success" id="inquirySuccess">
+        <div class="form-success-icon">
+          <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h3>문의가 접수되었습니다</h3>
+        <p>빠른 시일 내에 답변 드리겠습니다.<br />감사합니다.</p>
+      </div>
+    </div>
+  </section>
+
   <div id="footer-placeholder"></div>
   <script src="/main.js"></script>
+  <script>
+    async function submitInquiry() {
+      const name = document.getElementById('inqName').value.trim();
+      const email = document.getElementById('inqEmail').value.trim();
+      const phone = document.getElementById('inqPhone').value.trim();
+      const company = document.getElementById('inqCompany').value.trim();
+      const inquiry_type = document.getElementById('inqType').value;
+      const message = document.getElementById('inqMessage').value.trim();
+      const privacy = document.getElementById('inqPrivacy').checked;
+
+      if (!name || !email || !message) {
+        alert('이름, 이메일, 문의내용은 필수 입력 항목입니다.');
+        return;
+      }
+      if (!privacy) {
+        alert('개인정보 수집·이용에 동의해 주세요.');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitInquiry');
+      btn.disabled = true;
+      btn.textContent = '전송 중...';
+
+      try {
+        await sbInsert('inquiries', {
+          name, email, phone: phone || null, company: company || null,
+          inquiry_type, message, privacy_agreed: true
+        });
+        document.getElementById('inquiryForm').style.display = 'none';
+        document.getElementById('inquirySuccess').classList.add('show');
+      } catch (e) {
+        alert('문의 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+        btn.disabled = false;
+        btn.textContent = '문의 보내기';
+      }
+    }
+  </script>
 </body>
 </html>
