@@ -78,18 +78,18 @@ const DataStore = {
 
 // ---- SHARED NAVIGATION ----
 const NAV_LINKS = [
-  { label: '홈', href: '/index.html', page: 'index' },
-  { label: '회사개요', href: '/about.html', page: 'about' },
-  { label: '서비스', href: '/services.html', page: 'services' },
-  { label: '포트폴리오', href: '/portfolio.html', page: 'portfolio' },
-  { label: '고객사', href: '/clients.html', page: 'clients' },
-  { label: '문의', href: '/contact.html', page: 'contact' }
+  { label: '홈', href: './index.html', page: 'index' },
+  { label: '회사개요', href: './about.html', page: 'about' },
+  { label: '서비스', href: './services.html', page: 'services' },
+  { label: '포트폴리오', href: './portfolio.html', page: 'portfolio' },
+  { label: '고객사', href: './clients.html', page: 'clients' },
+  { label: '문의', href: './contact.html', page: 'contact' }
 ];
 
 function getCurrentPage() {
   const path = window.location.pathname;
-  if (path === '/' || path.endsWith('/index.html') || path === '/index.html') return 'index';
-  const match = path.match(/\/(\w+)\.html/);
+  if (path === '/' || path.endsWith('/') || path.endsWith('/index.html')) return 'index';
+  const match = path.match(/(\w+)\.html$/);
   return match ? match[1] : 'index';
 }
 
@@ -104,7 +104,7 @@ function insertNav() {
   placeholder.outerHTML = `
   <nav class="nav" id="nav">
     <div class="nav-inner">
-      <a href="/index.html" class="nav-logo"><img src="/assets/logo.png" alt="WB TRAVEL" class="nav-logo-img" /></a>
+      <a href="./index.html" class="nav-logo"><img src="./assets/logo.png" alt="WB TRAVEL" class="nav-logo-img" /></a>
       <ul class="nav-links" id="navLinks">${linksHtml}</ul>
       <button class="nav-toggle" id="navToggle" aria-label="메뉴"><span></span><span></span><span></span></button>
     </div>
@@ -119,16 +119,16 @@ function insertFooter() {
     <div class="container">
       <div class="footer-inner">
         <div class="footer-brand">
-          <span class="nav-logo"><img src="/assets/logo.png" alt="WB TRAVEL" class="footer-logo-img" /></span>
+          <span class="nav-logo"><img src="./assets/logo.png" alt="WB TRAVEL" class="footer-logo-img" /></span>
           <p>(주)웰빙트래블 | 대표 서상호<br>종합여행업 제 2018-000012호 | IATA: 17319223</p>
         </div>
         <div class="footer-links">
-          <a href="/about.html">회사개요</a>
-          <a href="/services.html">서비스</a>
-          <a href="/portfolio.html">포트폴리오</a>
-          <a href="/clients.html">고객사</a>
-          <a href="/contact.html">문의</a>
-          <a href="/admin.html">관리자</a>
+          <a href="./about.html">회사개요</a>
+          <a href="./services.html">서비스</a>
+          <a href="./portfolio.html">포트폴리오</a>
+          <a href="./clients.html">고객사</a>
+          <a href="./contact.html">문의</a>
+          <a href="./admin.html">관리자</a>
         </div>
       </div>
       <div class="footer-copy">&copy; 2003-2025 Wellbeing Travel Co., Ltd. All rights reserved.</div>
