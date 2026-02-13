@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Debug Test</title>
+  <style>body{font-family:monospace;padding:20px;line-height:1.8;} .ok{color:green;} .err{color:red;} pre{background:#f0f0f0;padding:10px;overflow:auto;}</style>
+</head>
+<body>
+  <h2>Supabase + Config Debug</h2>
+  <div id="log"></div>
+  <script>
+    const log = document.getElementById('log');
+    function out(msg, ok) {
+      log.innerHTML += `<div class="${ok ? 'ok' : (ok === false ? 'err' : '')}">${msg}</div>`;
+    }
+
+    const SUPABASE_URL = 'https://gpcdyrftbpzuytmlgadu.supabase.co';
+    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwY2R5cmZ0YnB6dXl0bWxnYWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MjI3NDUsImV4cCI6MjA4NjQ5ODc0NX0.w7syY9p531k8fMCvxleX4eM3ghzl_5MohNo-2Okdhv8';
+    const CONFIG_URL = SUPABASE_URL + '/storage/v1/object/public/config/site-config.json';
+
+    async function run() {
+      out('1. Testing site-config.json...');
+      try {
+        const r1 = await fetch(CONFIG_URL + '?t=' + Date.now());
+        const cfg = await r1.json();
+        out('Config loaded: hiddenClients=' + JSON.stringify(cfg.hiddenClients), true);
+      } catch(e) { out('Config error: ' + e.message, false); }
+
+      out('2. Testing portfolio API...');
+      try {
+        const r2 = await fetch(SUPABASE_URL + '/rest/v1/portfolio?select=*&order=sort_order', {
+          headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
+        });
+        const pf = await r2.json();
+        out('Portfolio: ' + (Array.isArray(pf) ? pf.length + ' rows' : 'ERROR'), Array.isArray(pf));
+        if (pf.length) out('<pre>' + pf.map(p => p.title).join('\n') + '</pre>');
+      } catch(e) { out('Portfolio error: ' + e.message, false); }
+
+      out('3. Testing clients API...');
+      try {
+        const r3 = await fetch(SUPABASE_URL + '/rest/v1/clients?select=*&order=sort_order', {
+          headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
+        });
+        const cl = await r3.json();
+        out('Clients: ' + (Array.isArray(cl) ? cl.length + ' rows' : 'ERROR'), Array.isArray(cl));
+        if (cl.length) out('<pre>' + cl.slice(0,10).map(c => c.name + ' (' + c.category + ')').join('\n') + '</pre>');
+      } catch(e) { out('Clients error: ' + e.message, false); }
+
+      out('4. Testing history API...');
+      try {
+        const r4 = await fetch(SUPABASE_URL + '/rest/v1/history?select=*&order=sort_order', {
+          headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
+        });
+        const h = await r4.json();
+        out('History: ' + (Array.isArray(h) ? h.length + ' rows' : 'ERROR'), Array.isArray(h));
+      } catch(e) { out('History error: ' + e.message, false); }
+
+      out('5. Testing getCurrentPage logic...');
+      const path = window.location.pathname;
+      out('pathname: ' + path);
+      if (path.endsWith('/portfolio.html')) out('Would detect: portfolio', true);
+      if (path.endsWith('/clients.html')) out('Would detect: clients', true);
+
+      out('--- Done ---');
+    }
+    run();
+  </script>
+</body>
+</html>
