@@ -1,6 +1,6 @@
 /* ============================================
    WELLBEING TRAVEL - Shared Logic
-   Supabase API + Navigation + Render
+   Supabase API + Site Config + Navigation + Render
    ============================================ */
 
 // ---- SUPABASE CONFIG ----
@@ -8,6 +8,7 @@ const SUPABASE_URL = 'https://gpcdyrftbpzuytmlgadu.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwY2R5cmZ0YnB6dXl0bWxnYWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MjI3NDUsImV4cCI6MjA4NjQ5ODc0NX0.w7syY9p531k8fMCvxleX4eM3ghzl_5MohNo-2Okdhv8';
 const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwY2R5cmZ0YnB6dXl0bWxnYWR1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDkyMjc0NSwiZXhwIjoyMDg2NDk4NzQ1fQ.fyrKlNpctUp8q3AJ4Y3G092bOq-sZdcrt4nIA1PaG3k';
 const STORAGE_URL = SUPABASE_URL + '/storage/v1/object/public';
+const CONFIG_URL = STORAGE_URL + '/config/site-config.json';
 
 // ---- SUPABASE REST HELPERS ----
 async function sbFetch(table, query, key) {
@@ -46,6 +47,37 @@ async function sbUpload(bucket, path, file) {
   throw new Error('Upload failed');
 }
 
+// ---- SITE CONFIG (Supabase Storage) ----
+let siteConfig = null;
+
+async function loadSiteConfig() {
+  try {
+    const res = await fetch(CONFIG_URL + '?t=' + Date.now());
+    if (res.ok) {
+      siteConfig = await res.json();
+      return siteConfig;
+    }
+  } catch (e) { console.error('Config load error:', e); }
+  // Default config
+  siteConfig = { hiddenClients: [], header: {}, footer: {} };
+  return siteConfig;
+}
+
+async function saveSiteConfig(config) {
+  siteConfig = config;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/config/site-config.json`, {
+    method: 'PUT',
+    headers: {
+      'apikey': SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(config)
+  });
+  if (!res.ok) throw new Error('Config save failed');
+  return true;
+}
+
 // ---- DATA STORE (Supabase) ----
 const DataStore = {
   _cache: {},
@@ -73,19 +105,15 @@ const DataStore = {
     } catch (e) { console.error('Clients fetch error:', e); }
     return [];
   },
+  async getVisibleClients() {
+    const all = await this.getClients();
+    const hidden = (siteConfig && siteConfig.hiddenClients) || [];
+    return all.filter(c => !hidden.includes(c.id));
+  },
   clearCache() { this._cache = {}; }
 };
 
-// ---- SHARED NAVIGATION ----
-const NAV_LINKS = [
-  { label: '홈', href: './index.html', page: 'index' },
-  { label: '회사개요', href: './about.html', page: 'about' },
-  { label: '서비스', href: './services.html', page: 'services' },
-  { label: '포트폴리오', href: './portfolio.html', page: 'portfolio' },
-  { label: '고객사', href: './clients.html', page: 'clients' },
-  { label: '문의', href: './contact.html', page: 'contact' }
-];
-
+// ---- NAVIGATION ----
 function getCurrentPage() {
   const path = window.location.pathname;
   if (path === '/' || path.endsWith('/') || path.endsWith('/index.html')) return 'index';
@@ -97,8 +125,17 @@ function insertNav() {
   const placeholder = document.getElementById('nav-placeholder');
   if (!placeholder) return;
   const currentPage = getCurrentPage();
-  const linksHtml = NAV_LINKS.map(link => {
-    const activeClass = link.page === currentPage ? ' class="active"' : '';
+  const navLinks = (siteConfig && siteConfig.header && siteConfig.header.navLinks) || [
+    { label: '홈', href: './index.html' },
+    { label: '회사개요', href: './about.html' },
+    { label: '서비스', href: './services.html' },
+    { label: '포트폴리오', href: './portfolio.html' },
+    { label: '고객사', href: './clients.html' },
+    { label: '문의', href: './contact.html' }
+  ];
+  const linksHtml = navLinks.map(link => {
+    const page = (link.href.match(/(\w+)\.html/) || [])[1] || 'index';
+    const activeClass = page === currentPage ? ' class="active"' : '';
     return `<li><a href="${link.href}"${activeClass}>${link.label}</a></li>`;
   }).join('');
   placeholder.outerHTML = `
@@ -114,24 +151,34 @@ function insertNav() {
 function insertFooter() {
   const placeholder = document.getElementById('footer-placeholder');
   if (!placeholder) return;
+  const f = (siteConfig && siteConfig.footer) || {};
+  const companyName = f.companyName || '(주)웰빙트래블';
+  const companyCeo = f.companyCeo || '대표 서상호';
+  const companyLicense = f.companyLicense || '종합여행업 제 2018-000012호';
+  const companyIata = f.companyIata || 'IATA: 17319223';
+  const copyright = f.copyright || '&copy; 2003-2025 Wellbeing Travel Co., Ltd. All rights reserved.';
+  const footerLinks = f.links || [
+    { label: '회사개요', href: './about.html' },
+    { label: '서비스', href: './services.html' },
+    { label: '포트폴리오', href: './portfolio.html' },
+    { label: '고객사', href: './clients.html' },
+    { label: '문의', href: './contact.html' },
+    { label: '관리자', href: './admin.html' }
+  ];
+  const linksHtml = footerLinks.map(l => `<a href="${l.href}">${l.label}</a>`).join('\n          ');
   placeholder.outerHTML = `
   <footer class="footer">
     <div class="container">
       <div class="footer-inner">
         <div class="footer-brand">
           <span class="nav-logo"><img src="./assets/logo.png" alt="WB TRAVEL" class="footer-logo-img" /></span>
-          <p>(주)웰빙트래블 | 대표 서상호<br>종합여행업 제 2018-000012호 | IATA: 17319223</p>
+          <p>${companyName} | ${companyCeo}<br>${companyLicense} | ${companyIata}</p>
         </div>
         <div class="footer-links">
-          <a href="./about.html">회사개요</a>
-          <a href="./services.html">서비스</a>
-          <a href="./portfolio.html">포트폴리오</a>
-          <a href="./clients.html">고객사</a>
-          <a href="./contact.html">문의</a>
-          <a href="./admin.html">관리자</a>
+          ${linksHtml}
         </div>
       </div>
-      <div class="footer-copy">&copy; 2003-2025 Wellbeing Travel Co., Ltd. All rights reserved.</div>
+      <div class="footer-copy">${copyright}</div>
     </div>
   </footer>`;
 }
@@ -139,7 +186,6 @@ function insertFooter() {
 // ---- CLIENT LOGO RENDERING ----
 function logoCard(c, cssClass) {
   const cls = cssClass || 'cl-card';
-  // Use DB brand info if available, else fallback to name
   if (c.logo_url) {
     return `<div class="${cls} reveal"><img src="${c.logo_url}" alt="${c.name}" style="max-height:36px;max-width:120px;object-fit:contain;" /></div>`;
   }
@@ -171,6 +217,10 @@ async function renderTimeline() {
   if (!el) return;
   el.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>연혁을 불러오는 중...</p></div>';
   const data = await DataStore.getHistory();
+  if (!data.length) {
+    el.innerHTML = '<p class="empty-state">등록된 연혁이 없습니다.</p>';
+    return;
+  }
   el.innerHTML = data.map(h => `
     <div class="tl-item reveal">
       <div class="tl-year">${h.year}</div>
@@ -220,7 +270,11 @@ async function renderClients(targetId, filterCategory) {
   const el = document.getElementById(targetId || 'clientsGrid');
   if (!el) return;
   if (!filterCategory) el.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>고객사를 불러오는 중...</p></div>';
-  const clients = await DataStore.getClients();
+  const clients = await DataStore.getVisibleClients();
+  if (!clients.length) {
+    el.innerHTML = '<p class="empty-state">등록된 고객사가 없습니다.</p>';
+    return;
+  }
   const groups = {};
   clients.forEach(c => {
     const cat = CAT_MAP[c.category] || '기타';
@@ -229,7 +283,9 @@ async function renderClients(targetId, filterCategory) {
   });
   if (filterCategory && filterCategory !== '전체') {
     const filtered = groups[filterCategory] || [];
-    el.innerHTML = `<div class="cl-grid">${filtered.map(c => logoCard(c)).join('')}</div>`;
+    el.innerHTML = filtered.length
+      ? `<div class="cl-grid">${filtered.map(c => logoCard(c)).join('')}</div>`
+      : '<p class="empty-state">해당 카테고리에 등록된 고객사가 없습니다.</p>';
   } else {
     el.innerHTML = CAT_ORDER
       .filter(cat => groups[cat] && groups[cat].length)
@@ -246,13 +302,13 @@ async function renderClients(targetId, filterCategory) {
 async function renderHomeClients() {
   const el = document.getElementById('homeClientsGrid');
   if (!el) return;
-  const highlights = [
-    '동국제강그룹', 'NH투자증권', 'CITI BANK', '한국투자증권', '한국무역보험공사',
-    '동아일보', '국민대학교', 'PIVOT group', '하나투어', '모두투어',
-    '채널A', '유안타증권', 'IBK투자증권', '수원시청', '안양시청'
-  ];
-  const allClients = await DataStore.getClients();
-  const clients = allClients.filter(c => highlights.includes(c.name));
+  const allClients = await DataStore.getVisibleClients();
+  // Show first 15 visible clients on home page
+  const clients = allClients.slice(0, 15);
+  if (!clients.length) {
+    el.innerHTML = '<p class="empty-state">등록된 고객사가 없습니다.</p>';
+    return;
+  }
   el.innerHTML = clients.map(c => logoCard(c, 'logo-wall-card')).join('');
   initReveal();
 }
@@ -264,7 +320,6 @@ function initClientTabs() {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      DataStore._cache.clients = null; // refresh
       renderClients('clientsGrid', tab.getAttribute('data-category'));
     });
   });
@@ -273,8 +328,8 @@ function initClientTabs() {
 // ---- SCROLL REVEAL ----
 function initReveal() {
   const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
   document.querySelectorAll('.reveal:not(.visible)').forEach(el => obs.observe(el));
 }
 
@@ -324,28 +379,36 @@ function animateCount(el, target) {
 // ---- PAGE-SPECIFIC INITIALIZATION ----
 async function initPage() {
   const page = getCurrentPage();
-  switch (page) {
-    case 'index':
-      await renderHomeClients();
-      break;
-    case 'portfolio':
-      await Promise.all([renderTimeline(), renderPortfolio()]);
-      break;
-    case 'clients':
-      await renderClients('clientsGrid');
-      initClientTabs();
-      break;
+  try {
+    switch (page) {
+      case 'index':
+        await renderHomeClients();
+        break;
+      case 'portfolio':
+        await Promise.all([renderTimeline(), renderPortfolio()]);
+        break;
+      case 'clients':
+        await renderClients('clientsGrid');
+        initClientTabs();
+        break;
+    }
+  } catch (e) {
+    console.error('Page init error:', e);
   }
 }
 
 // ---- INIT ----
-document.addEventListener('DOMContentLoaded', () => {
-  insertNav();
-  insertFooter();
-  initPage();
-  requestAnimationFrame(() => {
-    initReveal();
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await loadSiteConfig();
+    insertNav();
+    insertFooter();
     initNav();
+    initReveal();
     initCounters();
-  });
+    await initPage();
+    initReveal();
+  } catch (e) {
+    console.error('Init error:', e);
+  }
 });
