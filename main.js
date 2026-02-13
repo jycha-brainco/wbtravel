@@ -116,9 +116,14 @@ const DataStore = {
 // ---- NAVIGATION ----
 function getCurrentPage() {
   const path = window.location.pathname;
-  if (path === '/' || path.endsWith('/') || path.endsWith('/index.html')) return 'index';
-  const match = path.match(/(\w+)\.html$/);
-  return match ? match[1] : 'index';
+  if (path === '/' || path.endsWith('/') || path.endsWith('/index.html') || path === '/index') return 'index';
+  // Match with .html extension
+  const matchHtml = path.match(/(\w+)\.html$/);
+  if (matchHtml) return matchHtml[1];
+  // Match clean URL (Cloudflare Pages strips .html)
+  const matchClean = path.match(/\/(\w+)$/);
+  if (matchClean) return matchClean[1];
+  return 'index';
 }
 
 function insertNav() {
@@ -134,7 +139,7 @@ function insertNav() {
     { label: '문의', href: '/contact.html' }
   ];
   const linksHtml = navLinks.map(link => {
-    const page = (link.href.match(/(\w+)\.html/) || [])[1] || 'index';
+    const page = (link.href.match(/(\w+)\.html/) || link.href.match(/\/(\w+)$/) || [])[1] || 'index';
     const activeClass = page === currentPage ? ' class="active"' : '';
     return `<li><a href="${link.href}"${activeClass}>${link.label}</a></li>`;
   }).join('');
