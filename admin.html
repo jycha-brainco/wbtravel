@@ -605,7 +605,7 @@
           <div class="card-body">
             <p style="color:var(--admin-text-secondary);font-size:0.9rem;line-height:1.8;">
               이 관리자 패널에서 IR 사이트의 <strong>연혁</strong>, <strong>포트폴리오</strong>, <strong>고객사</strong> 데이터를 관리할 수 있습니다.<br />
-              변경 사항은 브라우저 로컬 스토리지에 저장되며, IR 사이트에 즉시 반영됩니다.<br /><br />
+              변경 사항은 Supabase 데이터베이스에 저장되며, IR 사이트에 즉시 반영됩니다.<br /><br />
               <strong>구조 안내:</strong><br />
               - <strong>웰빙트래블 IR 사이트</strong> (index.html) : 기업 소개 및 IR 정보<br />
               - <strong>관리자 페이지</strong> (admin.html) : 연혁/포트폴리오/고객사 CRUD<br />
@@ -720,23 +720,32 @@
   <script src="/main.js"></script>
   <script>
     // ---- Admin State ----
-    let currentModal = null; // { type, mode, id }
+    let currentModal = null;
+    let adminData = { history: [], portfolio: [], clients: [] };
+
+    // ---- Supabase Admin Helpers ----
+    async function adminFetch(table) {
+      return sbFetch(table, 'select=*&order=sort_order', SUPABASE_SERVICE_KEY);
+    }
+
+    async function loadAllData() {
+      const [h, p, c] = await Promise.all([
+        adminFetch('history'), adminFetch('portfolio'), adminFetch('clients')
+      ]);
+      adminData.history = h;
+      adminData.portfolio = p;
+      adminData.clients = c;
+    }
 
     // ---- Page Navigation ----
     function showPage(page, el) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById('page-' + page).classList.add('active');
-
       document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
       if (el) el.classList.add('active');
-
       const titles = { dashboard: '대시보드', history: '연혁 관리', portfolio: '포트폴리오 관리', clients: '고객사 관리' };
       document.getElementById('pageTitle').textContent = titles[page] || page;
-
-      // Close mobile sidebar
       document.getElementById('sidebar').classList.remove('open');
-
-      // Refresh data on page switch
       if (page === 'history') renderHistoryTable();
       if (page === 'portfolio') renderPortfolioTable();
       if (page === 'clients') renderClientsTable();
@@ -745,157 +754,127 @@
 
     // ---- Dashboard ----
     function updateDashboardStats() {
-      document.getElementById('statHistory').textContent = DataStore.getHistory().length;
-      document.getElementById('statPortfolio').textContent = DataStore.getPortfolio().length;
-      document.getElementById('statClients').textContent = DataStore.getClients().length;
+      document.getElementById('statHistory').textContent = adminData.history.length;
+      document.getElementById('statPortfolio').textContent = adminData.portfolio.length;
+      document.getElementById('statClients').textContent = adminData.clients.length;
     }
 
     // ---- HISTORY CRUD ----
     function renderHistoryTable() {
-      const data = DataStore.getHistory();
       const tbody = document.getElementById('historyTableBody');
-      tbody.innerHTML = data.map(item => `
+      tbody.innerHTML = adminData.history.map(item => `
         <tr>
           <td><strong>${item.year}</strong></td>
-          <td>
-            <ul class="item-list">
-              ${item.items.map(i => `<li>${i}</li>`).join('')}
-            </ul>
-          </td>
-          <td>
-            <div class="actions-cell">
-              <button class="btn-admin btn-admin-outline btn-admin-sm" onclick="editHistory(${item.id})">수정</button>
-              <button class="btn-admin btn-admin-danger btn-admin-sm" onclick="deleteHistory(${item.id})">삭제</button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+          <td><ul class="item-list">${item.items.map(i => '<li>' + i + '</li>').join('')}</ul></td>
+          <td><div class="actions-cell">
+            <button class="btn-admin btn-admin-outline btn-admin-sm" onclick="editHistory(${item.id})">수정</button>
+            <button class="btn-admin btn-admin-danger btn-admin-sm" onclick="deleteHistory(${item.id})">삭제</button>
+          </div></td>
+        </tr>`).join('');
     }
 
     function openHistoryModal(id) {
-      const data = id ? DataStore.getHistory().find(h => h.id === id) : null;
+      const data = id ? adminData.history.find(h => h.id === id) : null;
       currentModal = { type: 'history', mode: data ? 'edit' : 'add', id: id || null };
-
       document.getElementById('modalTitle').textContent = data ? '연혁 수정' : '연혁 추가';
       document.getElementById('modalBody').innerHTML = `
-        <div class="form-group">
-          <label>연도</label>
-          <input type="text" id="formYear" placeholder="예: 2024 또는 2020-2021" value="${data ? data.year : ''}" />
-        </div>
-        <div class="form-group">
-          <label>내용</label>
+        <div class="form-group"><label>연도</label>
+          <input type="text" id="formYear" placeholder="예: 2024 또는 2020-2021" value="${data ? data.year : ''}" /></div>
+        <div class="form-group"><label>내용</label>
           <textarea id="formItems" placeholder="한 줄에 하나씩 입력하세요">${data ? data.items.join('\n') : ''}</textarea>
-          <div class="form-hint">각 항목을 줄바꿈으로 구분합니다.</div>
-        </div>
-      `;
+          <div class="form-hint">각 항목을 줄바꿈으로 구분합니다.</div></div>
+        <div class="form-group"><label>정렬 순서</label>
+          <input type="number" id="formSortOrder" value="${data ? data.sort_order : adminData.history.length + 1}" /></div>`;
       document.getElementById('modalOverlay').classList.add('open');
     }
 
     function editHistory(id) { openHistoryModal(id); }
 
-    function deleteHistory(id) {
+    async function deleteHistory(id) {
       if (!confirm('이 연혁 항목을 삭제하시겠습니까?')) return;
-      const data = DataStore.getHistory().filter(h => h.id !== id);
-      DataStore.setHistory(data);
+      await sbMutate('DELETE', 'history', null, 'id=eq.' + id);
+      adminData.history = adminData.history.filter(h => h.id !== id);
       renderHistoryTable();
       showToast('연혁이 삭제되었습니다.');
     }
 
     // ---- PORTFOLIO CRUD ----
     function renderPortfolioTable() {
-      const data = DataStore.getPortfolio();
       const tbody = document.getElementById('portfolioTableBody');
-      const categoryLabels = { workshop: '워크샵', golf: '골프', event: '이벤트' };
-      tbody.innerHTML = data.map(item => `
+      const catLabels = { workshop: '워크샵', golf: '골프', event: '이벤트' };
+      tbody.innerHTML = adminData.portfolio.map(item => `
         <tr>
-          <td><strong>${item.title}</strong></td>
+          <td><strong>${item.title}</strong>${item.image_url ? ' <span style="color:var(--admin-success);font-size:0.7rem;">IMG</span>' : ''}</td>
           <td>${item.location}</td>
           <td>${item.participants}</td>
-          <td>${categoryLabels[item.category] || item.category}</td>
-          <td>
-            <div class="actions-cell">
-              <button class="btn-admin btn-admin-outline btn-admin-sm" onclick="editPortfolio(${item.id})">수정</button>
-              <button class="btn-admin btn-admin-danger btn-admin-sm" onclick="deletePortfolio(${item.id})">삭제</button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+          <td>${catLabels[item.category] || item.category}</td>
+          <td><div class="actions-cell">
+            <button class="btn-admin btn-admin-outline btn-admin-sm" onclick="editPortfolio(${item.id})">수정</button>
+            <button class="btn-admin btn-admin-danger btn-admin-sm" onclick="deletePortfolio(${item.id})">삭제</button>
+          </div></td>
+        </tr>`).join('');
     }
 
     function openPortfolioModal(id) {
-      const data = id ? DataStore.getPortfolio().find(p => p.id === id) : null;
+      const data = id ? adminData.portfolio.find(p => p.id === id) : null;
       currentModal = { type: 'portfolio', mode: data ? 'edit' : 'add', id: id || null };
-
       document.getElementById('modalTitle').textContent = data ? '포트폴리오 수정' : '포트폴리오 추가';
       document.getElementById('modalBody').innerHTML = `
-        <div class="form-group">
-          <label>프로젝트명</label>
-          <input type="text" id="formTitle" value="${data ? data.title : ''}" placeholder="예: A기업 워크샵" />
-        </div>
-        <div class="form-group">
-          <label>장소</label>
-          <input type="text" id="formLocation" value="${data ? data.location : ''}" placeholder="예: 방콕, 태국" />
-        </div>
-        <div class="form-group">
-          <label>참가인원</label>
-          <input type="text" id="formParticipants" value="${data ? data.participants : ''}" placeholder="예: 50명" />
-        </div>
-        <div class="form-group">
-          <label>주요서비스</label>
-          <input type="text" id="formServices" value="${data ? data.services : ''}" placeholder="예: 항공/숙박/차량/가이드 수배" />
-        </div>
-        <div class="form-group">
-          <label>카테고리</label>
+        <div class="form-group"><label>프로젝트명</label>
+          <input type="text" id="formTitle" value="${data ? data.title : ''}" placeholder="예: A기업 워크샵" /></div>
+        <div class="form-group"><label>장소</label>
+          <input type="text" id="formLocation" value="${data ? data.location : ''}" placeholder="예: 방콕, 태국" /></div>
+        <div class="form-group"><label>참가인원</label>
+          <input type="text" id="formParticipants" value="${data ? data.participants : ''}" placeholder="예: 50명" /></div>
+        <div class="form-group"><label>주요서비스</label>
+          <input type="text" id="formServices" value="${data ? data.services : ''}" placeholder="예: 항공/숙박/차량/가이드 수배" /></div>
+        <div class="form-group"><label>카테고리</label>
           <select id="formCategory">
             <option value="workshop" ${data && data.category === 'workshop' ? 'selected' : ''}>워크샵</option>
             <option value="golf" ${data && data.category === 'golf' ? 'selected' : ''}>골프</option>
             <option value="event" ${data && data.category === 'event' ? 'selected' : ''}>이벤트</option>
-          </select>
+          </select></div>
+        <div class="form-group"><label>이미지</label>
+          <input type="file" id="formImage" accept="image/jpeg,image/png,image/webp" />
+          ${data && data.image_url ? '<div class="form-hint" style="margin-top:8px;"><img src="' + data.image_url + '" style="max-height:80px;border-radius:8px;" /> 현재 이미지</div>' : '<div class="form-hint">최대 5MB (JPG, PNG, WebP)</div>'}
         </div>
-      `;
+        <div class="form-group"><label>정렬 순서</label>
+          <input type="number" id="formSortOrder" value="${data ? data.sort_order : adminData.portfolio.length + 1}" /></div>`;
       document.getElementById('modalOverlay').classList.add('open');
     }
 
     function editPortfolio(id) { openPortfolioModal(id); }
 
-    function deletePortfolio(id) {
+    async function deletePortfolio(id) {
       if (!confirm('이 포트폴리오를 삭제하시겠습니까?')) return;
-      const data = DataStore.getPortfolio().filter(p => p.id !== id);
-      DataStore.setPortfolio(data);
+      await sbMutate('DELETE', 'portfolio', null, 'id=eq.' + id);
+      adminData.portfolio = adminData.portfolio.filter(p => p.id !== id);
       renderPortfolioTable();
       showToast('포트폴리오가 삭제되었습니다.');
     }
 
     // ---- CLIENTS CRUD ----
     function renderClientsTable() {
-      const data = DataStore.getClients();
       const tbody = document.getElementById('clientsTableBody');
-      tbody.innerHTML = data.map(item => `
+      tbody.innerHTML = adminData.clients.map(item => `
         <tr>
-          <td><strong>${item.name}</strong></td>
+          <td><strong>${item.name}</strong>${item.logo_url ? ' <span style="color:var(--admin-success);font-size:0.7rem;">LOGO</span>' : ''}</td>
           <td>${item.category}</td>
-          <td>
-            <div class="actions-cell">
-              <button class="btn-admin btn-admin-outline btn-admin-sm" onclick="editClient(${item.id})">수정</button>
-              <button class="btn-admin btn-admin-danger btn-admin-sm" onclick="deleteClient(${item.id})">삭제</button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+          <td><div class="actions-cell">
+            <button class="btn-admin btn-admin-outline btn-admin-sm" onclick="editClient(${item.id})">수정</button>
+            <button class="btn-admin btn-admin-danger btn-admin-sm" onclick="deleteClient(${item.id})">삭제</button>
+          </div></td>
+        </tr>`).join('');
     }
 
     function openClientModal(id) {
-      const data = id ? DataStore.getClients().find(c => c.id === id) : null;
+      const data = id ? adminData.clients.find(c => c.id === id) : null;
       currentModal = { type: 'clients', mode: data ? 'edit' : 'add', id: id || null };
-
       document.getElementById('modalTitle').textContent = data ? '고객사 수정' : '고객사 추가';
       document.getElementById('modalBody').innerHTML = `
-        <div class="form-group">
-          <label>고객사명</label>
-          <input type="text" id="formClientName" value="${data ? data.name : ''}" placeholder="예: 삼성전자" />
-        </div>
-        <div class="form-group">
-          <label>카테고리</label>
+        <div class="form-group"><label>고객사명</label>
+          <input type="text" id="formClientName" value="${data ? data.name : ''}" placeholder="예: 삼성전자" /></div>
+        <div class="form-group"><label>카테고리</label>
           <select id="formClientCategory">
             <option value="대기업" ${data && data.category === '대기업' ? 'selected' : ''}>대기업</option>
             <option value="금융" ${data && data.category === '금융' ? 'selected' : ''}>금융</option>
@@ -906,80 +885,115 @@
             <option value="여행" ${data && data.category === '여행' ? 'selected' : ''}>여행</option>
             <option value="유통" ${data && data.category === '유통' ? 'selected' : ''}>유통</option>
             <option value="협회" ${data && data.category === '협회' ? 'selected' : ''}>협회</option>
-          </select>
+          </select></div>
+        <div class="form-group"><label>로고 이미지</label>
+          <input type="file" id="formLogo" accept="image/jpeg,image/png,image/webp,image/svg+xml" />
+          ${data && data.logo_url ? '<div class="form-hint" style="margin-top:8px;"><img src="' + data.logo_url + '" style="max-height:40px;border-radius:4px;" /> 현재 로고</div>' : '<div class="form-hint">최대 2MB (JPG, PNG, WebP, SVG)</div>'}
         </div>
-      `;
+        <div class="form-group"><label>브랜드 색상</label>
+          <input type="text" id="formBrandColor" value="${data && data.brand_color ? data.brand_color : ''}" placeholder="예: #003478" /></div>
+        <div class="form-group"><label>표시 텍스트 (선택)</label>
+          <input type="text" id="formBrandText" value="${data && data.brand_text ? data.brand_text : ''}" placeholder="로고 대신 표시할 텍스트" /></div>
+        <div class="form-group"><label>정렬 순서</label>
+          <input type="number" id="formSortOrder" value="${data ? data.sort_order : adminData.clients.length + 1}" /></div>`;
       document.getElementById('modalOverlay').classList.add('open');
     }
 
     function editClient(id) { openClientModal(id); }
 
-    function deleteClient(id) {
+    async function deleteClient(id) {
       if (!confirm('이 고객사를 삭제하시겠습니까?')) return;
-      const data = DataStore.getClients().filter(c => c.id !== id);
-      DataStore.setClients(data);
+      await sbMutate('DELETE', 'clients', null, 'id=eq.' + id);
+      adminData.clients = adminData.clients.filter(c => c.id !== id);
       renderClientsTable();
       showToast('고객사가 삭제되었습니다.');
     }
 
     // ---- MODAL SAVE ----
-    function saveModal() {
+    async function saveModal() {
       if (!currentModal) return;
+      const saveBtn = document.getElementById('modalSaveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = '저장 중...';
 
-      if (currentModal.type === 'history') {
-        const year = document.getElementById('formYear').value.trim();
-        const items = document.getElementById('formItems').value.trim().split('\n').filter(i => i.trim());
-        if (!year || !items.length) { showToast('모든 필드를 입력해주세요.'); return; }
+      try {
+        if (currentModal.type === 'history') {
+          const year = document.getElementById('formYear').value.trim();
+          const items = document.getElementById('formItems').value.trim().split('\n').filter(i => i.trim());
+          const sort_order = parseInt(document.getElementById('formSortOrder').value) || 0;
+          if (!year || !items.length) { showToast('모든 필드를 입력해주세요.'); return; }
 
-        const data = DataStore.getHistory();
-        if (currentModal.mode === 'edit') {
-          const idx = data.findIndex(h => h.id === currentModal.id);
-          if (idx >= 0) { data[idx].year = year; data[idx].items = items; }
-        } else {
-          const maxId = data.reduce((max, h) => Math.max(max, h.id), 0);
-          data.push({ id: maxId + 1, year, items });
+          if (currentModal.mode === 'edit') {
+            await sbMutate('PATCH', 'history', { year, items, sort_order }, 'id=eq.' + currentModal.id);
+          } else {
+            await sbMutate('POST', 'history', { year, items, sort_order });
+          }
+          adminData.history = await adminFetch('history');
+          renderHistoryTable();
+
+        } else if (currentModal.type === 'portfolio') {
+          const title = document.getElementById('formTitle').value.trim();
+          const location = document.getElementById('formLocation').value.trim();
+          const participants = document.getElementById('formParticipants').value.trim();
+          const services = document.getElementById('formServices').value.trim();
+          const category = document.getElementById('formCategory').value;
+          const sort_order = parseInt(document.getElementById('formSortOrder').value) || 0;
+          if (!title || !location) { showToast('필수 필드를 입력해주세요.'); return; }
+
+          let image_url = currentModal.mode === 'edit' ? (adminData.portfolio.find(p => p.id === currentModal.id) || {}).image_url : null;
+          const fileInput = document.getElementById('formImage');
+          if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const ext = file.name.split('.').pop();
+            const path = `portfolio_${Date.now()}.${ext}`;
+            image_url = await sbUpload('portfolio-images', path, file);
+          }
+
+          const body = { title, location, participants, services, category, sort_order, image_url };
+          if (currentModal.mode === 'edit') {
+            await sbMutate('PATCH', 'portfolio', body, 'id=eq.' + currentModal.id);
+          } else {
+            await sbMutate('POST', 'portfolio', body);
+          }
+          adminData.portfolio = await adminFetch('portfolio');
+          renderPortfolioTable();
+
+        } else if (currentModal.type === 'clients') {
+          const name = document.getElementById('formClientName').value.trim();
+          const category = document.getElementById('formClientCategory').value;
+          const brand_color = document.getElementById('formBrandColor').value.trim() || null;
+          const brand_text = document.getElementById('formBrandText').value.trim() || null;
+          const sort_order = parseInt(document.getElementById('formSortOrder').value) || 0;
+          if (!name) { showToast('고객사명을 입력해주세요.'); return; }
+
+          let logo_url = currentModal.mode === 'edit' ? (adminData.clients.find(c => c.id === currentModal.id) || {}).logo_url : null;
+          const fileInput = document.getElementById('formLogo');
+          if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const ext = file.name.split('.').pop();
+            const path = `client_${Date.now()}.${ext}`;
+            logo_url = await sbUpload('client-logos', path, file);
+          }
+
+          const body = { name, category, brand_color, brand_text, sort_order, logo_url };
+          if (currentModal.mode === 'edit') {
+            await sbMutate('PATCH', 'clients', body, 'id=eq.' + currentModal.id);
+          } else {
+            await sbMutate('POST', 'clients', body);
+          }
+          adminData.clients = await adminFetch('clients');
+          renderClientsTable();
         }
-        DataStore.setHistory(data);
-        renderHistoryTable();
 
-      } else if (currentModal.type === 'portfolio') {
-        const title = document.getElementById('formTitle').value.trim();
-        const location = document.getElementById('formLocation').value.trim();
-        const participants = document.getElementById('formParticipants').value.trim();
-        const services = document.getElementById('formServices').value.trim();
-        const category = document.getElementById('formCategory').value;
-        if (!title || !location) { showToast('필수 필드를 입력해주세요.'); return; }
-
-        const data = DataStore.getPortfolio();
-        if (currentModal.mode === 'edit') {
-          const idx = data.findIndex(p => p.id === currentModal.id);
-          if (idx >= 0) { Object.assign(data[idx], { title, location, participants, services, category }); }
-        } else {
-          const maxId = data.reduce((max, p) => Math.max(max, p.id), 0);
-          data.push({ id: maxId + 1, title, location, participants, services, category });
-        }
-        DataStore.setPortfolio(data);
-        renderPortfolioTable();
-
-      } else if (currentModal.type === 'clients') {
-        const name = document.getElementById('formClientName').value.trim();
-        const category = document.getElementById('formClientCategory').value;
-        if (!name) { showToast('고객사명을 입력해주세요.'); return; }
-
-        const data = DataStore.getClients();
-        if (currentModal.mode === 'edit') {
-          const idx = data.findIndex(c => c.id === currentModal.id);
-          if (idx >= 0) { data[idx].name = name; data[idx].category = category; }
-        } else {
-          const maxId = data.reduce((max, c) => Math.max(max, c.id), 0);
-          data.push({ id: maxId + 1, name, category });
-        }
-        DataStore.setClients(data);
-        renderClientsTable();
+        closeModal();
+        updateDashboardStats();
+        showToast('저장되었습니다.');
+      } catch (err) {
+        showToast('오류: ' + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '저장';
       }
-
-      closeModal();
-      showToast('저장되었습니다.');
     }
 
     // ---- MODAL CONTROLS ----
@@ -997,7 +1011,8 @@
     }
 
     // ---- INIT ----
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadAllData();
       updateDashboardStats();
       renderHistoryTable();
       renderPortfolioTable();
