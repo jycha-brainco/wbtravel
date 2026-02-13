@@ -149,9 +149,10 @@ button { font-family: var(--font); }
    HERO SECTION
    ============================================ */
 .hero {
-  position: relative; min-height: 100vh; display: flex;
-  align-items: center; justify-content: center; overflow: hidden;
+  position: relative; min-height: 100vh; min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
   background: var(--gradient-dark);
+  padding: 100px 0 80px;
 }
 .hero-bg-image {
   position: absolute; inset: 0; z-index: 0;
@@ -190,7 +191,7 @@ button { font-family: var(--font); }
   background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.2);
   color: #93c5fd; padding: 8px 20px; border-radius: 100px;
   font-size: 0.78rem; font-weight: 500; letter-spacing: 0.04em;
-  margin-bottom: 32px; backdrop-filter: blur(10px);
+  margin-bottom: clamp(16px, 3vh, 32px); backdrop-filter: blur(10px);
 }
 .hero-badge-dot {
   width: 6px; height: 6px; border-radius: 50%;
@@ -198,23 +199,23 @@ button { font-family: var(--font); }
 }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 .hero-title {
-  font-size: clamp(2.8rem, 6.5vw, 5rem);
+  font-size: clamp(2.4rem, 6vw, 5rem);
   font-weight: 900; color: var(--white);
   line-height: 1.1; letter-spacing: -0.04em;
-  margin-bottom: 28px;
+  margin-bottom: clamp(16px, 2.5vh, 28px);
 }
 .hero-desc {
-  font-size: clamp(1rem, 2vw, 1.18rem);
-  color: rgba(255,255,255,0.45); line-height: 1.9;
-  margin-bottom: 48px; font-weight: 300;
+  font-size: clamp(0.95rem, 1.8vw, 1.18rem);
+  color: rgba(255,255,255,0.45); line-height: 1.8;
+  margin-bottom: clamp(24px, 4vh, 48px); font-weight: 300;
 }
-.hero-btns { display: flex; gap: 14px; justify-content: center; margin-bottom: 72px; }
+.hero-btns { display: flex; gap: 14px; justify-content: center; margin-bottom: clamp(32px, 6vh, 72px); }
 .hero-metrics {
-  display: flex; align-items: center; justify-content: center; gap: 48px;
+  display: flex; align-items: center; justify-content: center; gap: clamp(24px, 4vw, 48px);
 }
 .metric { text-align: center; }
 .metric-value {
-  font-size: 2.8rem; font-weight: 900; color: var(--white);
+  font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 900; color: var(--white);
   letter-spacing: -0.04em; line-height: 1;
 }
 .metric-value span { font-size: 1.2rem; font-weight: 600; color: #60a5fa; }
@@ -761,6 +762,30 @@ button { font-family: var(--font); }
 /* ============================================
    RESPONSIVE - 4 Stage Breakpoints
    ============================================ */
+
+/* Short viewport (small laptops, e.g. 1366x768) */
+@media (max-height: 800px) {
+  .hero { padding: 80px 0 60px; }
+  .hero-badge { margin-bottom: 12px; font-size: 0.72rem; padding: 6px 16px; }
+  .hero-title { margin-bottom: 14px; }
+  .hero-desc { margin-bottom: 20px; line-height: 1.7; }
+  .hero-btns { margin-bottom: 28px; }
+  .hero-metrics { gap: 24px; }
+  .metric-value { font-size: 1.8rem; }
+  .metric-value span { font-size: 1rem; }
+  .metric-label { font-size: 0.72rem; margin-top: 4px; }
+  .metric-sep { height: 32px; }
+  .hero-scroll-indicator { bottom: 16px; }
+}
+
+/* Very short viewport (e.g. 1280x600 or landscape tablets) */
+@media (max-height: 650px) {
+  .hero { padding: 70px 0 50px; }
+  .hero-desc br { display: none; }
+  .hero-btns { margin-bottom: 20px; }
+  .hero-metrics { gap: 16px; }
+  .metric-sep { height: 24px; }
+}
 
 /* Large tablets / small desktops */
 @media (max-width: 1200px) {
